@@ -1,0 +1,102 @@
+{
+  "name": "m-shadow-studio",
+  "version": "1.2.0",
+  "private": true,
+  "description": "M-shadow Studio - 英语听说训练桌面软件（导入/智能断句/翻译/配音/跟读评分/听写拼写/导出）",
+  "main": "electron/main.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently -k \"vite --port 5173\" \"wait-on tcp:127.0.0.1:5173 && cross-env VITE_DEV_URL=http://127.0.0.1:5173 electron .\"",
+    "build": "vite build",
+    "start": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "test": "node test/smoke.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.2",
+    "ffmpeg-static": "^5.3.0",
+    "mammoth": "^1.13.0",
+    "msedge-tts": "^2.1.1",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^6.0.3",
+    "wait-on": "^8.0.1",
+    "zustand": "^5.0.2"
+  },
+  "build": {
+    "appId": "com.shadowing.studio",
+    "productName": "M-shadow Studio",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "asar": false,
+    "files": [
+      "!node_modules/@huggingface/transformers/.cache/**/*",
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "resources/icon.png",
+      "!node_modules/onnxruntime-web/**/*",
+      "!node_modules/onnxruntime-node/bin/napi-v6/linux/**/*",
+      "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**/*",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*",
+      "!node_modules/@napi-rs/**/*",
+      "!node_modules/ffmpeg-static/**/*",
+      "!node_modules/@img/sharp-linux*/**/*",
+      "!node_modules/@img/sharp-libvips-linux*/**/*",
+      "!node_modules/@img/sharp-linuxmusl*/**/*",
+      "!node_modules/@img/sharp-wasm32/**/*",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/bin",
+        "to": "bin"
+      },
+      {
+        "from": "resources/models",
+        "to": "models"
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**/*",
+      "node_modules/ffmpeg-static/**/*",
+      "node_modules/@huggingface/transformers/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "M-shadow Studio",
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico"
+    },
+    "electronLanguages": [
+      "en-US",
+      "zh-CN",
+      "zh-TW"
+    ]
+  }
+}
