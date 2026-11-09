@@ -18,6 +18,7 @@
 
 - [功能特性](#功能特性)
 - [界面预览](#界面预览)
+- [仓库结构说明](#仓库结构说明)
 - [系统要求](#系统要求)
 - [快速开始](#快速开始)
 - [语音模型与外部组件](#语音模型与外部组件)
@@ -111,19 +112,40 @@
 
 ## 界面预览
 
-| 学习跟读 | 跟读评分 |
-| --- | --- |
-| ![学习跟读](https://aka.doubaocdn.com/s/5AtiD2OycD) | ![跟读评分](https://aka.doubaocdn.com/s/e7yzIMnVUH) |
+以下截图来自当前 **V1.2.0** 构建：
 
-| 听写拼写 | 设置 |
+| 学习跟读（含评分） | 听写拼写 |
 | --- | --- |
-| ![听写拼写](https://aka.doubaocdn.com/s/ohLcgOLqpP) | ![设置](https://aka.doubaocdn.com/s/79nUGZWm0F) |
+| ![学习跟读](https://aka.doubaocdn.com/s/dfmg7KS791) | ![听写拼写](https://aka.doubaocdn.com/s/rGFA7RW5N2) |
 
-| 帮助与版本信息 | 夜晚模式 |
+| 生词库 | 素材列表右键菜单 |
 | --- | --- |
-| ![帮助与版本信息](https://aka.doubaocdn.com/s/vHRyp1JfF9) | ![夜晚模式](https://aka.doubaocdn.com/s/VqDNVMOMXz) |
+| ![生词库](https://aka.doubaocdn.com/s/QtuLOCu95L) | ![素材右键菜单](https://aka.doubaocdn.com/s/8Xc0YoJkEa) |
 
-> 截图文件同时保存在仓库的 `screenshots/` 目录；上面使用在线地址，便于 GitHub 与飞书预览直接显示。截图可能来自较早版本，界面细节以当前 V1.2.0 为准。
+| 设置 | 夜晚模式 |
+| --- | --- |
+| ![设置](https://aka.doubaocdn.com/s/PBkf63cJO6) | ![夜晚模式](https://aka.doubaocdn.com/s/TwfVbMmzuy) |
+
+> 原图保存在源码目录的 `screenshots/v1.2.0/`；上面使用在线地址，便于 GitHub 和飞书预览直接显示。
+
+---
+
+## 仓库结构说明
+
+当前仓库根目录是：
+
+```text
+.
+├─ M-shadow_Studio-源码-V1.2.0/       # 完整源码
+├─ M-shadow_Studio-源码-V1.2.0.zip    # 源码压缩包（内容与上面目录重复）
+├─ LICENSE                            # MIT
+└─ README.md
+```
+
+> 源码不在仓库根目录，**运行和打包命令需要先进入 `M-shadow_Studio-源码-V1.2.0/`**。
+> 建议后续删除重复的源码 zip，并把源码目录里的文件移到仓库根目录，GitHub 浏览和克隆会更清爽；移动后把本文命令里的 `cd` 一步去掉即可。
+>
+> 本仓库只保存源码，不包含约 750MB 的绿色版运行时、Whisper 模型和 `yt-dlp/ffmpeg` 二进制。绿色版请从 Release 下载，或按下方步骤自行打包。
 
 ---
 
@@ -147,6 +169,8 @@
 
 ### 方式一：使用绿色版
 
+> 绿色版不放在源码仓库里，请从仓库 Release 下载；自己打包则见下方「打包 Windows 绿色版」。
+
 1. 解压整个 `M-shadow-Studio-*-win64.zip`；
 2. 双击 `M-shadow Studio.exe`；
 3. 第一次启动若出现「Windows 已保护你的电脑」，点「更多信息」→「仍要运行」（未做代码签名的正常提示）；
@@ -158,13 +182,14 @@
 
 ```bash
 # 环境：Node.js 20+，Windows 10/11 x64
+cd M-shadow_Studio-源码-V1.2.0
 npm install
 npm run dev        # 开发模式：Vite + Electron
 npm run build      # 只构建前端
 npm start          # 构建前端后启动 Electron
 ```
 
-也可以双击仓库根目录的 `1-安装依赖.bat` / `2-启动程序.bat`。
+也可以双击源码目录里的 `1-安装依赖.bat` / `2-启动程序.bat`。
 
 ### 打包 Windows 绿色版
 
@@ -248,8 +273,10 @@ userdata/
 
 ## 项目结构
 
+源码位于 `M-shadow_Studio-源码-V1.2.0/`（下列路径相对该目录）：
+
 ```text
-shadowing-studio/
+M-shadow_Studio-源码-V1.2.0/
 ├─ electron/                     Electron 主进程
 │  ├─ main.js                   窗口、media:// 协议、IPC、导入/导出/评分调度
 │  ├─ preload.js                contextBridge 暴露给渲染进程的 API
@@ -285,6 +312,7 @@ shadowing-studio/
 │  ├─ icon.ico / icon.png
 │  ├─ bin/                      ffmpeg.exe / yt-dlp.exe（不提交）
 │  └─ models/                   Whisper 模型（不提交）
+├─ screenshots/v1.2.0/          README 截图原图
 ├─ test/
 │  ├─ smoke.mjs                 核心逻辑冒烟测试
 │  ├─ e2e.mjs                   音频→识别→断句→翻译→配音全链路
@@ -353,4 +381,4 @@ xvfb-run -a --server-args="-screen 0 1300x900x24" npx electron . --no-sandbox
 
 ## License
 
-MIT（见 `package.json`）。
+MIT（见仓库根目录 `LICENSE`）。
