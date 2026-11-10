@@ -1,363 +1,205 @@
 # M-shadow Studio
 
-**英语听说跟读训练桌面软件 · V1.2.0（2026/11）**
+**V1.0.0（2026/11）· Author：SeanZhou2933 · 反馈 Mail：zxq2933@qq.com**
 
-把一段英语材料，变成「逐句精听 → 跟读打分 → 听写拼写 → 背生词 → 导出随身听」的完整训练流程。
+一款 Windows 桌面软件，把「一段英语材料」变成「可以逐句精听、跟读打分、听写拼写、导出随身听」的完整训练流程。
 
-![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4)
-![Electron](https://img.shields.io/badge/Electron-33-2B2E3A)
-![React](https://img.shields.io/badge/React-18-61DAFB)
-![Vite](https://img.shields.io/badge/Vite-6-646CFF)
-![License](https://img.shields.io/badge/license-MIT-green)
-
-> 本项目是面向 Windows 的本地桌面应用。语音识别在本地运行，配音与翻译按所选通道联网；素材、录音、生词库和设置都保存在程序目录，整个文件夹可以直接拷走。
+全程免费方案：语音合成用微软 Edge 的神经网络音色（无需 API Key），语音识别在本地跑 Whisper（无需联网、无需 Python），翻译默认走免费通道。
 
 ---
 
-## 目录
+## 零、快速开始（Windows 用户看这里）
 
-- [功能特性](#功能特性)
-- [界面预览](#界面预览)
-- [系统要求](#系统要求)
-- [快速开始](#快速开始)
-- [语音模型与外部组件](#语音模型与外部组件)
-- [数据目录](#数据目录)
-- [项目结构](#项目结构)
-- [技术实现](#技术实现)
-- [测试](#测试)
-- [已知边界](#已知边界)
-- [第三方服务与隐私](#第三方服务与隐私)
-- [License](#license)
+**推荐：用绿色版，零依赖。** 解压 `M-shadow-Studio-1.0.0-win64.zip`，双击里面的
+`M-shadow Studio.exe` 直接启动——不需要 Node.js，不需要跑任何脚本，不需要命令行。
+建议右键 → 发送到 → 桌面快捷方式。
 
----
+**给开发者：从源码运行。**
 
-## 功能特性
+```
+双击 1-安装依赖.bat      ← 首次运行，约 3-5 分钟（需要先装 Node.js 20+）
+双击 2-启动程序.bat      ← 每次使用
+双击 3-打包exe.bat      ← 生成安装包，产物在 release 目录
+```
 
-### 1. 素材导入
+手动命令：`npm install` → `npm start` → `npm run dist:win`。
 
-- **文本**：`.txt` / `.md` / `.pdf` / `.docx`，也支持直接「粘贴文本」建素材。
-- **音频**：`.mp3` / `.wav` / `.m4a` / `.aac` / `.flac`，自动转码并识别成带时间轴的句子。
-- **视频**：`.mp4` / `.mov` / `.mkv` / `.webm`，自动抽取音轨再识别。
-- **视频链接**：通过 `yt-dlp` 导入 B 站 / YouTube 等链接；有英文字幕时优先用字幕时间轴，没有字幕则走本地语音识别。
-- 文件、文本、链接导入都是**后台任务**：列表顶部显示浅绿色进度条与当前阶段（读取素材 / 切分 / 翻译并配音），导入期间可以继续操作其他素材。
-- 素材列表支持**搜索标题**、右键**改名 / 置顶 / 取消置顶 / 删除**；置顶支持多篇，后置顶的排更前；删除后列表立即移除，清理转后台。
-
-### 2. 智能断句与句子编辑
-
-- 规则断句：保护 `Mr.` / `U.S.` / 小数等缩写，合并碎句，超长句按逗号、连词二次切分。
-- 有真实音频时用 ASR 时间戳对齐；纯文本按词数比例估算时间轴。
-- 每句右侧「⋯」菜单提供四个独立动作：
-  - **编辑**：句框内直接变成输入框，`Enter` 保存，`Esc` 取消；
-  - **拆分**：可一键按智能切点拆分，也可以点任意单词按选中位置拆分，下方实时预览前后句；
-  - **合并**：默认勾选下一句，可继续往后勾选连续多句合并；
-  - **删除**：删除该句。
-- 拆分、合并、编辑后会清空旧的译文、配音、评分和录音，并在后台静默重译、重配音，避免旧字幕/旧音频绑在新文本上。
-
-### 3. 精听与跟读评分
-
-- 点句子文字切换当前句；播放面板支持单句 / 全篇 / 循环播放，循环四态：关闭循环、单句循环、全篇循环、无敌循环。
-- 跟读录音支持一键开始/停止，可设置「先播一遍再录」。
-- 评分从三个维度给出结果：
-  - **准确度**：漏词、读错词、多词，词级高亮；
-  - **流利度**：语速与参考音差异、长停顿；
-  - **音量**：麦克风音量是否合适、是否爆音。
-- 输出中文改进建议，并保留每句历史录音，可回放、可导出。
-- 语音识别可完全离线：内置 Whisper ONNX 模型，不依赖 Python / CUDA。
-
-### 4. 听写拼写
-
-- 两种模式：**单词听写**、**整句听写**，题目只来自当前选中的文章。
-- 顺序 / 随机出题；随机模式同样只从当前文章抽词，提示会挖空该词在原文中的句子。
-- 单词按字母数挖空；答错逐词比对。
-- 「提示」只显示中文，不会把词加入生词库；看过中文或提示的词按既有规则进入生词库。
-- 答错且本题没看过中文/提示时，会提示「单词已加入生词库！」；看过中文时显示对应说明；看过提示则不显示。
-
-### 5. 生词背诵与生词库
-
-- 从 `txt / md / pdf / docx / csv` 抽词或短语建生词库，支持逗号、斜杠、分号分隔的清单。
-- 导入时先批量入库，再后台补全音标和中文释义；顶部「从文件导入生词」按钮显示绿色进度条，**全部补完才算导入完成**。
-- 生词库支持：
-  - 搜索、排序、分页，每页词数可选 `10 / 20 / 50 / 100 / 全部`；
-  - 「全部」模式下一张表滚轮看到底，不分页；
-  - 下拉筛选「全部内容 / 全单词 / 全短语」；
-  - 表头全选、多选删除、列宽拖动；
-  - 点单词发音，中文释义/词性过长时悬浮显示完整内容。
-- 导出弹窗支持：
-  - 格式：CSV / TXT；
-  - 导出项：英文单词（必选）、音标（可选）、中文意思（可选）；
-  - 导出路径可直接编辑，也可点「选择目录」；
-  - 支持**后台导出**，顶部按钮变成绿色进度条，导出期间不影响其他功能；
-  - 缺失的音标/释义会在导出前自动补齐，失败信息显示在弹窗内。
-
-### 6. 导出
-
-- 整篇配音 MP3、跟读录音 MP3、配音+跟读合集。
-- SRT / LRC 字幕导出。
-- 生词本 CSV / TXT 导出。
-- 导出的 MP3 会自动削掉句首尾静音，句间停顿按标点自适应。
-
-### 7. 设置与界面
-
-- 白天 / 夜晚主题，默认白天，切换后记住。
-- 全应用 5 档语速：`0.5× / 0.75× / 1.0× / 1.25× / 1.5×`。
-- 快捷键按「听写拼写 / 生词背诵」分区配置，数字键、单字母、方向键、F1–F12 都支持。
-- 设置页分区：学习与跟读、听写与背诵、声音与导出、翻译识别与导入、数据与版本。
-- 设置页滚动位置 60 秒内返回会自动恢复。
-- 翻译通道：自动 / MyMemory 免费 / Google 免费端点 / 任意 OpenAI 兼容大模型（豆包、DeepSeek 等）。
-- 语音识别模型：默认并推荐 `small.en`，另内置 `tiny.en`；支持把自己下载的 Whisper 模型包放进程序目录后在设置里选择。
-- 内置环境自检：ffmpeg、本地语音模型、配音服务、yt-dlp、sharp。
+> 「点 1-安装依赖.bat 没反应」怎么办：
+> 现在这个脚本会把 npm 的实时日志直接刷在窗口里（同时写入 `install.log`），所以一打开就该有字滚动。
+> 如果窗口一闪就没了，说明这台电脑没装 Node.js，脚本会停下来提示你——遇到这种情况，直接用绿色版就行，
+> 绿色版不需要 Node.js，双击 `M-shadow Studio.exe` 即可。
 
 ---
 
-## 界面预览
+## 一、功能对照
 
-以下截图来自当前 **V1.2.0** 构建：
-
-| 学习跟读（含评分） | 听写拼写 |
+| 你的需求 | 实现情况 |
 | --- | --- |
-| ![学习跟读](https://aka.doubaocdn.com/s/dfmg7KS791) | ![听写拼写](https://aka.doubaocdn.com/s/rGFA7RW5N2) |
+| 导入 txt / pdf / word | ✅ 支持 .txt / .md / .pdf / .docx；另有「粘贴文本」按钮，不存文件直接把文章贴进来也能建素材 |
+| 导入 mp3 | ✅ 支持 mp3 / wav / m4a / aac / flac，自动转 16k 音频并识别成带时间轴的句子 |
+| 导入 mp4 | ✅ 支持 mp4 / mov / mkv / webm，自动分离音轨再识别 |
+| 接入视频网站分享链接 | ✅ 走 yt-dlp，支持 B 站/YouTube 等；若站点自带英文字幕会优先用字幕的时间轴，没有字幕则自动语音识别 |
+| AI 智能切句 | ✅ 规则引擎断句：保护 Mr. / U.S. / 小数等缩写，合并碎句，超长句按逗号/连词二次切分；有真实音频时用 ASR 时间戳对齐 |
+| 逐句翻译 | ✅ 免费通道 MyMemory（国内可直连）/ Google 免费端点 / 任意 OpenAI 兼容大模型（豆包、DeepSeek 等） |
+| 生成清晰地道语音、声源可选 | ✅ Edge 神经音色 21 款：英式 5 款 + 爱尔兰 2 款排在最前（Sonia / Libby / Maisie / Ryan / Thomas / Emily / Connor），另有美音、澳音、加音、新西兰、印度、南非；**音色选择放在跟读面板里，随时换** |
+| 每句单独朗读 | ✅ 不必找按钮：直接点中间任意一句的文字就播那一句；点句尾麦克风图标立刻跟读该句 |
+| 影子跟读 | ✅ 一个主按钮，用开关决定「先听后读」还是「直接朗读」；同步跟读已移除 |
+| 跟读评分 + 建议 | ✅ 准确度 / 流利度 / 音量三维打分，词级高亮漏读、读偏、多读，给出中文改进建议；识别模型已内置，评分不联网；出错时面板内直接显示原因并可重试 |
+| 导出生成的 mp3 | ✅ 整篇配音合成为 MP3：自动削掉每句自带的首尾静音，句间停顿按标点长短自适应（逗号短停、句号换气），听感接近连贯讲话 |
+| 导出影子跟读的 MP3 | ✅ 每句的录音都会保存，可导出合集 |
+| 背生词 | ✅ 独立功能页（和跟读、听写并列）：生词卡片背单词，含中文释义、联想记忆（词缀拆解）、单词派生、导入原文与例句；可导出 CSV / TXT（单词 + 中文意思） |
+| 拼写功能 | ✅ 扇贝式背单词：单词听写 / 整句听写，按雅思高频词（雅思词汇真经/四级词汇/雅思核心词伙口径）排序，也可把跟读发音不准的词并入；支持顺序 / 随机出题；拼错或看过中文、提示的词自动进生词库，至少隔 3 个词后再次出现；释义取自在线词典 |
 
-| 生词库 | 素材列表右键菜单 |
-| --- | --- |
-| ![生词库](https://aka.doubaocdn.com/s/QtuLOCu95L) | ![素材右键菜单](https://aka.doubaocdn.com/s/8Xc0YoJkEa) |
+额外附赠：SRT / LRC 字幕导出、句子四种显示模式（中英 / 英文 / 中文 / 模糊）。
 
-| 设置 | 夜晚模式 |
-| --- | --- |
-| ![设置](https://aka.doubaocdn.com/s/PBkf63cJO6) | ![夜晚模式](https://aka.doubaocdn.com/s/TwfVbMmzuy) |
+快捷键：跟读页 空格 播放当前句、↑↓ 切换句子；听写页与背生词页一致，默认 **1 重听 / 0 中文 / 2 提示 / ArrowRight 下一个**（Enter 也可检查或跳到下一题），这四个键在「设置 → 听写快捷键」里可以自己改。
+
+语速全应用统一为 5 档：**0.5× / 0.75× / 1.0× / 1.25× / 1.5×**（跟读、听写、导出都用同一套档位）。
+
+右上角三个按钮依次是：白天/夜晚模式、设置（舵盘图标）、帮助。主题默认白天，切换后会记住。
+
+版本信息：点右上角「帮助」可以看到 **V1.0.0（2026/11）、Author：SeanZhou2933、反馈 Mail：zxq2933@qq.com**、数据目录和全部快捷键。
 
 ---
 
-## 系统要求
+## 二、快速开始（Windows）
 
-| 项目 | 要求 |
-| --- | --- |
-| 操作系统 | **Windows 10 / Windows 11，64 位（x64）** |
-| 处理器 | Intel / AMD x64；Windows ARM 未适配，不保证可用 |
-| 内存 | 建议 4GB 以上，8GB 更稳 |
-| 硬盘 | 绿色版约 750MB；另需素材、录音、导出文件空间 |
-| 麦克风 | 跟读录音与评分需要 |
-| 网络 | 配音（Edge TTS）、翻译、视频链接导入需要；本地语音识别不需要 |
-| Node.js | 仅从源码运行/打包时需要，建议 20+；绿色版不需要 |
+### 从源码运行需要先装好的东西
 
-不支持 32 位 Windows、Windows 7/8、macOS、Linux。Windows Server 不属于正式支持范围。
-
----
-
-## 快速开始
-
-> 源码位于仓库中的 `M-shadow_Studio-源码-V1.2.0/`，从源码运行或打包时先进入该目录。
-
-### 方式一：使用绿色版
-
-> 绿色版不放在源码仓库里，请从仓库 Release 下载；自己打包则见下方「打包 Windows 绿色版」。
-
-1. 解压整个 `M-shadow-Studio-*-win64.zip`；
-2. 双击 `M-shadow Studio.exe`；
-3. 第一次启动若出现「Windows 已保护你的电脑」，点「更多信息」→「仍要运行」（未做代码签名的正常提示）；
-4. 想建桌面快捷方式，可双击 `创建桌面快捷方式.bat`。
-
-不要只单独拷 `exe`：模型、`resources`、`userdata` 都在一起才完整。
-
-### 方式二：从源码运行
+1. **Node.js 20 或更高**：<https://nodejs.org/zh-cn/download>（装 LTS 版即可）
+2. 其它都不用装，ffmpeg 已内置在 `resources/bin/ffmpeg.exe`。
 
 ```bash
-# 环境：Node.js 20+，Windows 10/11 x64
-cd M-shadow_Studio-源码-V1.2.0
-npm install
-npm run dev        # 开发模式：Vite + Electron
-npm run build      # 只构建前端
-npm start          # 构建前端后启动 Electron
+npm install        # 或双击 1-安装依赖.bat
+npm start          # 或双击 2-启动程序.bat
+npm run dist:win   # 或双击 3-打包exe.bat，产物在 release 目录
 ```
 
-也可以双击源码目录里的 `1-安装依赖.bat` / `2-启动程序.bat`。
+> 打包说明：`npm run dist:win` 在 **Windows 上**跑最稳（直接调用系统能力，不需要 wine）。
+> 在 Linux/macOS 上交叉打包 Windows 需要额外装 wine（含 32 位支持），否则会在
+> NSIS 外壳这一步卡住；这种情况下可以用 `npx electron-builder --win zip` 出一个绿色版压缩包。
 
-### 打包 Windows 绿色版
+### 首次使用的两个「一次性」等待
 
+- **第一次导入 MP3/MP4 或第一次跟读评分**：会下载本地语音识别模型（默认 base.en 约 100MB），进度条会显示百分比。之后就一直用本地缓存，不再联网。
+- **第一次配音**：需要连微软的语音服务（免费），之后同一句话会命中缓存，秒出。
+
+---
+
+## 三、怎么用最有效
+
+### 1. 导入素材
+左侧「导入文件」支持多选。也可以把视频链接粘进输入框回车。
+
+导入后会自动做三件事：切句 → 翻译 → 配音（可以在设置里关掉自动翻译/自动配音）。
+
+### 2. 精听 + 跟读
+- 点句子左侧的 **▶** ：朗读这一句（配音是合成的标准发音，节奏干净，适合模仿）
+- 点句子右侧的 **麦克风**，或右侧面板的主按钮。面板下方有个「先播一遍再录」开关：
+  - 开着（默认）：先播一遍配音，播完自动开始录音，读完点「停止并评分」
+  - 关掉：点一下按钮立刻开始录音，适合已经很熟的句子
+- 音色就在这个面板的「音色」下拉里换，英式音色排在最前面，选中后下一句朗读就用新音色
+
+评分会给出：
+- **准确度**：有没有漏词、读错词、多词（词级高亮）
+- **流利度**：语速与参考音差多少、有没有长停顿
+- **音量**：麦克风音量是否合适、有没有爆音
+- 以及具体的中文建议，例如「有 3 个词没读出来：…」「语速偏快：录音 2.1s，参考 3.3s」
+
+### 3. 听写拼写
+「听写拼写」页：单词听写 / 整句听写，题目都来自当前素材。可反复点播放，答完逐词比对，错题自动进错题本。
+
+### 4. 导出
+- 右上角选「配音 MP3 / 跟读录音 MP3 / 配音+跟读」→ 点「导出」
+- 「字幕」导出 SRT（可导入剪映、网易云音乐等）
+- 「目录」直接打开导出文件夹
+
+---
+
+## 四、免费方案的能力边界（说实话）
+
+1. **评分不是音素级发音分析**。它做的是「识别你说了什么 → 和目标句子做词级对齐 → 叠加语速/停顿/音量」。
+   能可靠指出「哪个词漏了、哪个词听起来不对、语速快慢、停顿太多」，但不能像专业软件那样告诉你「你的 /θ/ 舌尖位置不对」。
+   想升级到音素级评分，需要接 Azure 发音评估或讯飞语音评测的付费接口，代码里已经预留了适配位置（见 `electron/lib/score.js`）。
+2. **翻译免费通道有每日额度**。MyMemory 匿名额度约每天几千字符，长文档可能中途失败。
+   - 解决办法：中文提示会告诉你失败了几句话；点「翻译」只补翻没翻的句子；
+   - 更好的办法：在「设置 → 翻译通道」填一个大模型 Key（DeepSeek、豆包等都行，OpenAI 兼容接口），整篇翻译质量明显更高。
+3. **视频链接依赖 yt-dlp 且受站点限制**。软件不内置 yt-dlp（它更新很频繁），需要你下载 `yt-dlp.exe` 并在设置里填路径。B 站、YouTube 通常没问题；国内访问 YouTube 需要在设置里填代理。
+4. **扫描版 PDF 没文字**。那种 PDF 需要先 OCR 成文字，本软件不做 OCR。
+
+---
+
+## 五、常见问题
+
+**Q：导入 MP3 卡在「下载模型 99%」很久？**
+首次下载模型受网络影响。设置里可把「模型下载源」切到 `hf-mirror.com`（国内镜像，默认已是这个）。
+
+**Q：录音评分一直提示「录音太短」？**
+检查系统麦克风权限（Windows 设置 → 隐私 → 麦克风 → 允许桌面应用访问）。录音少于约 0.5 秒会被拦掉。
+
+**Q：配音没声音/报错？**
+配音走微软公开的 Edge TTS 服务，需要网络。公司网络若屏蔽了 `speech.platform.bing.com`，会连不上；换手机热点试一下即可确认。
+
+**Q：打包 exe 失败？**
+`npm run dist:win` 会下载约 100MB 的 Windows 版 Electron 运行时，网络不稳容易中断，重试一次通常就好。国内可先执行：
 ```bash
-npm run build
-npx electron-builder --win --x64 --dir
-# 产物：release/win-unpacked/
+set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 ```
 
-`npm run dist:win` 默认生成 NSIS 安装包；Linux 交叉打包 NSIS 需要 wine，没有 wine 时用上面的 `--dir` 出绿色版目录。
+**Q：数据存在哪里？**
+Windows 下在 `%APPDATA%\shadowing-studio\`：`media`（素材音频）、`tts`（配音缓存）、`recordings`（跟读录音）、`exports`（导出文件）、`models`（语音模型）、`store.json`（素材库与设置）。
+删掉 `models` 目录可以释放几百 MB，下次用会重新下载。
 
 ---
 
-## 语音模型与外部组件
+## 六、项目结构
 
-以下大文件不随源码分发，使用前需要自行放置：
-
-### 1. Whisper 模型（语音识别）
-
-放到：
-
-```text
-resources/models/Xenova/whisper-small.en/
-resources/models/Xenova/whisper-tiny.en/
 ```
-
-每个模型目录至少包含：
-
-```text
-config.json
-generation_config.json
-onnx/
-  encoder_model_quantized.onnx
-  decoder_model_merged_quantized.onnx
-```
-
-模型来源：Hugging Face / hf-mirror 上的 `Xenova/whisper-small.en`、`Xenova/whisper-tiny.en`（Transformers.js 格式）。默认使用 `small.en`，更准但更慢；`tiny.en` 更快。
-
-### 2. 自定义模型
-
-把模型文件夹放到：
-
-```text
-<程序目录>\userdata\models\Xenova\<你的模型文件夹>\
-```
-
-要求文件夹内同样有 `config.json` 和 ONNX 模型文件。重新进入设置页后，「语音识别 → 识别模型」下拉会出现「自定义」选项。内置目录 `resources\models\Xenova` 也支持，但 Program Files 下可能没有写权限，优先用 `userdata\models\Xenova`。
-
-### 3. 视频链接组件
-
-```text
-resources/bin/yt-dlp.exe
-resources/bin/ffmpeg.exe
-```
-
-`yt-dlp.exe` 需自行下载最新版；`ffmpeg.exe` 可来自 ffmpeg-static 或官方构建。缺少 `yt-dlp.exe` 时链接导入不可用，其他功能不受影响。
-
----
-
-## 数据目录
-
-默认保存在**程序目录下的 `userdata/`**（绿色版可整体拷走）。如果程序目录不可写（例如安装在受保护目录），会自动退化到系统用户数据目录。
-
-```text
-userdata/
-├─ store.json        素材库、设置、置顶、快捷键等
-├─ vocab.json        生词库
-├─ dict-cache.json   词典查询缓存
-├─ media/            导入素材的音频
-├─ tts/              配音缓存
-├─ recordings/       跟读录音
-├─ exports/          导出文件（默认导出目录）
-├─ models/           自定义语音模型（可选）
-├─ tmp/              临时文件
-└─ logs/             日志
-```
-
-换电脑时，把整个程序文件夹（包括 `userdata`）一起复制即可。
-
----
-
-## 项目结构
-
-源码位于 `M-shadow_Studio-源码-V1.2.0/`（下列路径相对该目录）：
-
-```text
-M-shadow_Studio-源码-V1.2.0/
-├─ electron/                     Electron 主进程
-│  ├─ main.js                   窗口、media:// 协议、IPC、导入/导出/评分调度
-│  ├─ preload.js                contextBridge 暴露给渲染进程的 API
+shadowing-studio/
+├─ electron/                     主进程（Node 侧，做重活）
+│  ├─ main.js                    窗口、自定义 media:// 协议（支持 Range 以便音频精确跳转）、全部 IPC
+│  ├─ preload.js                 contextBridge 暴露给界面的安全 API
 │  ├─ lib/
-│  │  ├─ import.js              txt/pdf/docx/字幕/音频/视频/链接 导入
-│  │  ├─ text.js                文本清洗、断句、时间轴估算、ASR 对齐
-│  │  ├─ asr.js                 Whisper 子进程调度
-│  │  ├─ ffmpeg.js              抽音轨、转码、拼接、音量/停顿分析
-│  │  ├─ tts.js                 Edge TTS 配音与缓存
-│  │  ├─ translate.js           翻译通道适配与降级
-│  │  ├─ dict.js                词典查询、音标、释义缓存
-│  │  ├─ vocab.js               词汇表、派生词、联想记忆
-│  │  ├─ vocabstore.js          生词库持久化与批量写入
-│  │  ├─ score.js               词级对齐、多维评分、中文建议
-│  │  ├─ export.js              MP3 合成、SRT/LRC 生成
-│  │  ├─ store.js               设置与素材库 JSON 持久化
-│  │  └─ paths.js               数据目录管理
-│  └─ scripts/asr.mjs           本地 Whisper（transformers.js + ONNX）
-├─ src/                         React 渲染进程
-│  ├─ App.jsx                   框架、三视图常驻、窗口三键、主题
-│  ├─ store.js                  zustand 状态与业务动作
-│  ├─ lib/                      播放引擎、录音器、词级 diff、工具
-│  ├─ components/
-│  │  ├─ Sidebar.jsx            素材列表、搜索、右键菜单、导入
-│  │  ├─ StudyView.jsx          学习跟读、句子编辑/拆分/合并
-│  │  ├─ SpellingView.jsx       单词/整句听写
-│  │  ├─ VocabView.jsx          背单词、生词库、导入导出
-│  │  ├─ PlayerPanel.jsx        播放控制、录音、跟读
-│  │  ├─ SettingsView.jsx       设置页
-│  │  └─ ...
-│  └─ styles.css
-├─ resources/
-│  ├─ icon.ico / icon.png
-│  ├─ bin/                      ffmpeg.exe / yt-dlp.exe（不提交）
-│  └─ models/                   Whisper 模型（不提交）
-├─ test/
-│  ├─ smoke.mjs                 核心逻辑冒烟测试
-│  ├─ e2e.mjs                   音频→识别→断句→翻译→配音全链路
-│  └─ make-demo.mjs             生成演示素材
-├─ package.json
-├─ vite.config.js
-└─ 使用说明.txt
+│  │  ├─ import.js               txt/pdf/docx/字幕/音频/视频/链接 导入
+│  │  ├─ text.js                 文本清洗、智能断句、时间轴估算、ASR 对齐
+│  │  ├─ asr.js                  调度 Whisper 子进程
+│  │  ├─ ffmpeg.js               抽音轨、转码、拼接、音量与停顿分析
+│  │  ├─ tts.js                  Edge TTS 配音 + 内容哈希缓存
+│  │  ├─ translate.js            翻译适配器链（免费/大模型，自动降级）
+│  │  ├─ score.js                词级对齐 + 多维评分 + 中文建议
+│  │  ├─ export.js               MP3 合成、SRT/LRC 生成
+│  │  ├─ store.js                设置与素材库持久化（JSON）
+│  │  └─ paths.js                数据目录
+│  └─ scripts/asr.mjs            本地 Whisper（transformers.js + ONNX，纯 Node，不需要 Python）
+├─ src/                          界面（React）
+│  ├─ App.jsx                    框架、标签页、进度条、提示条
+│  ├─ store.js                   zustand 状态与业务动作
+│  ├─ lib/                       播放引擎、录音器、词级 diff、工具
+│  └─ components/                句子列表、播放面板、评分卡、听写页、设置页
+├─ test/smoke.mjs                核心逻辑冒烟测试（16 项，含真实 TTS/翻译/拼接）
+├─ test/e2e.mjs                  音频 → 识别 → 断句 → 翻译 → 配音 全链路测试
+└─ test/make-demo.mjs            生成演示素材，用于界面自检截图
 ```
 
----
+### 技术选型说明
 
-## 技术实现
+- **Electron + React + Vite**：Windows 上打包成 exe，界面用 React，构建产物是纯静态文件。
+- **本地 ASR 用 transformers.js**：把 Whisper 跑在 ONNX Runtime 上，不需要让用户装 Python、装 CUDA。识别跑在独立子进程里，不会卡住界面。
+- **`asar: false`**：不打 asar 包。这样 ONNX 的 .node 原生库、ffmpeg 可执行文件、ESM 子进程脚本在 Windows 上路径都不会出错——对普通用户来说「能跑」比「包得漂亮」重要。
+- **`media://` 自定义协议**：比 `file://` 更可控，手写了 Range 请求处理，所以点某一句能精准跳到 00:14 播放。
 
-- **Electron 33 + React 18 + Vite 6**：Windows 桌面端，前端构建为静态文件。
-- **本地 ASR**：`@huggingface/transformers` + ONNX Runtime，在独立子进程里跑 Whisper，不需要 Python / CUDA。
-- **`asar: false`**：ONNX 原生库、ffmpeg 可执行文件、ESM 子进程脚本在 Windows 上路径更稳。
-- **`media://` 自定义协议**：手写 Range 请求，点某一句可精确跳到对应时间播放。
-- **后台任务模型**：导入、翻译、配音、生词补全、导出都按任务状态运行，避免长任务占住全局 busy 导致界面点不动。
-- **数据一致性**：句子拆分/合并/编辑后清空旧译文、配音、评分、录音，再后台补齐，避免旧数据绑定新文本。
-- **打包瘦身**：排除 Transformers 缓存中的重复模型副本；`electronLanguages` 只保留 `en-US / zh-CN / zh-TW`，显著减小 locales 体积。
-
-### 主要 IPC 能力
-
-`import:url` / `import:text` / `import:file`、`translate:doc`、`tts:doc`、`score:run`、`vocab:*`、`doc:update/reorder/remove`、`window:*`、`app:diagnose` 等；具体见 `electron/main.js` 与 `electron/preload.js`。
-
----
-
-## 测试
+### 跑测试
 
 ```bash
 npm test
 ```
-
-覆盖断句、时间轴、评分算法、字幕生成，以及真实 Edge TTS / ffmpeg 拼接 / 翻译调用。部分用例依赖网络。
-
-无界面冒烟测试（Linux 开发环境）：
-
-```bash
-SMOKE_TEST=1 SMOKE_JS="document.body.innerText.slice(0,80)" \
-SMOKE_SHOT=/tmp/app.png \
-xvfb-run -a --server-args="-screen 0 1300x900x24" npx electron . --no-sandbox
-```
+覆盖断句（缩写保护、超长句拆分）、时间轴估算与 ASR 对齐、SRT 解析、评分算法（满分/漏词/空录音）、SRT/LRC 生成，以及真实调用 Edge TTS、ffmpeg 拼接和免费翻译。
 
 ---
 
-## 已知边界
+## 七、想继续改的话
 
-- 评分是「识别文本 → 词级对齐 → 语速/停顿/音量」的方案，不是音素级发音分析；不能判断 `/θ/` 舌位这类细节。
-- MyMemory 免费翻译有公共额度限制，长文可能中途限流；建议配置自己的大模型 Key。
-- 扫描版 PDF 没有文字层，本软件不做 OCR。
-- 视频链接依赖 `yt-dlp` 与站点可用性；YouTube 在国内需要代理。
-- Windows ARM、macOS、Linux 未做正式适配。
-- 语音识别准确率与模型大小、录音质量、麦克风环境有关。
-
----
-
-## 第三方服务与隐私
-
-- **Edge TTS**：配音会把句子文本发送到微软语音服务。
-- **MyMemory / Google 翻译 / 自配大模型**：翻译会把文本发送到对应服务商；敏感内容请改用本地或可信通道。
-- **视频链接**：由 `yt-dlp` 直接访问站点。
-- **本地语音识别**：录音只在本机处理，不会上传。
-- 素材、录音、生词库、设置默认只保存在本机 `userdata/`。
-
----
-
-## License
-
-MIT（见仓库根目录 `LICENSE`）。
+- **换评分接口**：`electron/lib/score.js` 的 `scoreReading()` 是纯函数，把 `hypothesis` 换成付费评测接口的音素结果即可接入。
+- **换翻译引擎**：`electron/lib/translate.js` 里加一个 `async function xxxOne(text)`，在 `translateTexts` 的 provider 分支加一路即可，会自动参与降级。
+- **加音色**：`electron/lib/tts.js` 的 `CURATED_VOICES` 里加 `en-XX-XXXXNeural` 即可，音色名可在微软语音库查到。
+- **想加「播放全部 / 逐句循环 N 遍 / AB 段复读」**：都在 `src/components/PlayerPanel.jsx` 的播放回调里扩展，`onEnd` 已经有自动下一句的逻辑。
